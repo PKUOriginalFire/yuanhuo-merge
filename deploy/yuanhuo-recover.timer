@@ -1,0 +1,22 @@
+# 合成大元火 · 兜底抢救定时器（每 5 分钟）
+#
+# 安装：
+#   sudo cp deploy/yuanhuo-recover.service deploy/yuanhuo-recover.timer /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now yuanhuo-recover.timer
+#
+# 看排程：systemctl list-timers yuanhuo-recover.timer
+# 看日志：journalctl -u yuanhuo-recover -n 50
+
+[Unit]
+Description=每 5 分钟扫一次"打完但没提交成功"的成绩
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=5min
+AccuracySec=30s
+# 重启后不补跑（历史记录本来就在库里，补跑没有意义，还会在开机瞬间多一次写锁）
+Persistent=false
+
+[Install]
+WantedBy=timers.target

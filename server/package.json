@@ -1,0 +1,11 @@
+{
+  "name": "yuanhuo-merge-server",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "排行榜与可恢复对局后端：node:http + node:sqlite + Matter.js",
+  "dependencies": { "matter-js": "0.20.0" },
+  "scripts": {
+    "start": "node index.js"
+  }
+}

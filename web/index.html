@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="color-scheme" content="only light" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#191222" />
+    <meta name="description" content="元火动漫社的合成小游戏：活动经典模式与岗位无尽模式。" />
+    <title>合成大元火</title>
+    <link rel="stylesheet" href="/src/ui/style.css" />
+  </head>
+  <body>
+    <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6" /></symbol>
+      <symbol id="i-back" viewBox="0 0 24 24"><path d="m14 5-7 7 7 7M7 12h14" /></symbol>
+      <symbol id="i-cup" viewBox="0 0 24 24"><path d="M7 3h10v7a5 5 0 0 1-10 0V3ZM7 5H3v3a4 4 0 0 0 4 4m10-7h4v3a4 4 0 0 1-4 4m-5 3v6m-4 0h8" /></symbol>
+      <symbol id="i-sound" viewBox="0 0 24 24"><path d="m11 4-6 5H2v6h3l6 5V4Zm5 4a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14" /></symbol>
+      <symbol id="i-muted" viewBox="0 0 24 24"><path d="m11 4-6 5H2v6h3l6 5V4Zm5 5 6 6m0-6-6 6" /></symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" /></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6" /></symbol>
+      <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 6c-3-3-7-3-10-2v15c3-1 7-1 10 2 3-3 7-3 10-2V4c-3-1-7-1-10 2Zm0 0v15" /></symbol>
+    </svg>
+    <div id="app" data-screen="loading">
+      <canvas id="game-canvas" tabindex="0" aria-label="合成游戏区域：按住鼠标或手指拖动瞄准，松开投放；Esc 暂停"></canvas>
+      <div id="hud" class="hud hidden">
+        <div class="hud-panel">
+          <div class="hud-toolbar">
+            <span class="hud-mode" id="hud-mode">经典模式</span>
+            <div class="hud-tools">
+              <button class="icon-btn" data-guide aria-label="打开玩法与图鉴"><svg class="icon"><use href="#i-book" /></svg></button>
+              <button class="icon-btn" id="btn-mute" data-sound aria-label="关闭声音"><svg class="icon"><use href="#i-sound" /></svg></button>
+              <button class="icon-btn" id="btn-pause" aria-label="暂停游戏"><svg class="icon"><use href="#i-pause" /></svg></button>
+            </div>
+          </div>
+          <div class="hud-main">
+            <div class="hud-score"><span class="field-label">本局得分</span><div class="hud-score-value" id="hud-score">0</div><div class="hud-score-best" id="hud-best">最高 0</div></div>
+            <div class="hud-next"><div><span class="field-label">下一颗</span><div id="hud-next-name"></div></div><canvas id="hud-next-canvas" width="104" height="104" aria-label="下一颗预览"></canvas></div>
+          </div>
+          <div class="hud-loop hidden" id="hud-loop">循环 <b id="hud-loop-n">0</b> 次</div>
+        </div>
+        <div id="play-hint" class="play-hint"><span>按住拖动瞄准 · 松开投放</span><small id="progress-hint">进度保存在云端，可中途退出</small></div>
+        <div class="game-toast" id="game-toast" role="status"></div>
+        <button class="secret-tray hidden" id="btn-secret" disabled aria-label="隐藏道具，拖入场地清除">
+          <canvas id="secret-canvas" width="104" height="104" aria-hidden="true"></canvas>
+          <span><strong id="secret-name">隐藏道具</strong><small>拖入场地清除</small></span>
+          <b id="secret-count">0</b>
+        </button>
+      </div>
+
+      <section class="screen" id="screen-loading" aria-label="加载游戏"><div class="loading-box"><div class="loading-title">合成大元火</div><div class="loading-bar" role="progressbar" aria-label="加载进度" aria-valuemin="0" aria-valuemax="100"><i id="loading-fill"></i></div><p id="loading-tip">正在加载…</p></div></section>
+
+      <section class="screen hidden" id="screen-home" aria-labelledby="home-title-fallback">
+        <div class="home-shell">
+          <header class="brand-bar"><span class="brand"><span class="brand-mark" aria-hidden="true"></span>元火动漫社</span><div class="brand-actions"><button class="text-btn" data-guide><svg class="icon"><use href="#i-book" /></svg>玩法与图鉴</button><button class="icon-btn" data-sound aria-label="关闭声音"><svg class="icon"><use href="#i-sound" /></svg></button></div></header>
+          <div class="home-inner">
+            <div class="home-spotlight" aria-hidden="true"><div class="home-light-pool"></div><div class="home-duo-fade"><div class="home-duo"></div></div></div>
+            <img id="home-logo" class="home-logo hidden" alt="合成大元火" />
+            <h1 class="home-title" id="home-title-fallback">合成<span>大元火</span></h1><svg class="home-flourish" viewBox="0 0 260 32" aria-hidden="true"><g fill="none" stroke="currentColor"><path d="M8 16h99m46 0h99M28 21h72m60 0h72M6 16q-9-12 3-12t12 12M254 16q9-12-3-12t-12 12"/></g><path fill="currentColor" d="m130 3 4 10 9 3-9 3-4 10-4-10-9-3 9-3Zm-20 10 3 3-3 3-3-3Zm40 0 3 3-3 3-3-3Z"/></svg>
+            <div class="home-bests"><span>经典最佳 <b id="best-classic">0</b></span><span>无尽最佳 <b id="best-endless">0</b></span></div>
+            <div class="home-actions"><button class="btn btn-primary btn-lg hidden" id="btn-continue">继续上局<svg class="icon"><use href="#i-arrow" /></svg></button><button class="btn btn-primary btn-lg" id="btn-play">选择模式<svg class="icon"><use href="#i-arrow" /></svg></button><button class="btn" id="btn-board"><svg class="icon"><use href="#i-cup" /></svg>排行榜</button></div>
+            <p id="home-session-status" class="session-status" role="status"></p>
+          </div>
+          <span id="asset-warn" class="asset-warn hidden"></span>
+        </div>
+      </section>
+
+      <section class="screen hidden" id="screen-mode" aria-labelledby="mode-title">
+        <div class="mode-inner"><div class="page-heading"><button class="icon-btn" data-back aria-label="返回首页"><svg class="icon"><use href="#i-back" /></svg></button><button class="text-btn" data-guide><svg class="icon"><use href="#i-book" /></svg>玩法与图鉴</button></div><h2 class="screen-title" id="mode-title">选择模式</h2>
+          <div class="mode-grid">
+            <button class="mode-card mode-classic" data-mode="classic"><canvas data-level="11" data-preview-mode="classic" width="224" height="224" aria-hidden="true"></canvas><h3>经典模式</h3><span class="mode-theme">活动</span><p>两颗最高级球共鸣后保留，每对奖励 100 分。</p><div class="mode-bottom"><span>个人最佳 <b id="mode-best-classic">0</b></span><svg class="icon"><use href="#i-arrow" /></svg></div></button>
+            <button class="mode-card mode-endless" data-mode="endless"><canvas data-level="11" data-preview-mode="endless" width="224" height="224" aria-hidden="true"></canvas><h3>无尽模式</h3><span class="mode-theme">岗位</span><p>两颗最高级球合成一级球，第 n 次循环奖励 500 × n 分。</p><div class="mode-bottom"><span>个人最佳 <b id="mode-best-endless">0</b></span><svg class="icon"><use href="#i-arrow" /></svg></div></button>
+          </div>
+          <p class="rule-note">相同等级合成 · 持续越线 2 秒结束</p><p id="mode-session-status" class="session-status" role="status"></p>
+        </div>
+      </section>
+
+      <section class="screen hidden" id="screen-result" aria-labelledby="result-title">
+        <div class="result-inner"><h2 class="result-title" id="result-title">本局结束</h2><div class="result-score"><span>本局得分</span><b id="result-score">0</b></div><div class="result-best hidden" id="result-best-box">刷新个人最佳</div><div class="result-meta"><div><span>最高等级</span><b id="result-maxlv">—</b></div><div><span>合成次数</span><b id="result-merges">0</b></div><div><span>对局时长</span><b id="result-time">0:00</b></div><div id="result-loop-wrap"><span>循环次数</span><b id="result-loop">0</b></div></div><div class="result-rank hidden" id="result-rank-box"><span>本模式排名</span><b id="result-rank">—</b></div><p class="result-sync" id="result-sync" role="status"></p><div class="result-actions"><button class="btn btn-primary" id="btn-again">再来一局<svg class="icon"><use href="#i-arrow" /></svg></button><div class="secondary-actions"><button class="text-btn" id="btn-result-board">排行榜</button><button class="text-btn" id="btn-result-home">回到首页</button></div></div></div>
+      </section>
+
+      <section class="screen hidden" id="screen-board" aria-labelledby="board-title"><div class="board-inner"><div class="page-heading"><button class="icon-btn" data-back aria-label="返回首页"><svg class="icon"><use href="#i-back" /></svg></button><button class="icon-btn" id="btn-board-refresh" aria-label="刷新排行榜">↻</button></div><h2 class="screen-title" id="board-title">排行榜</h2><div class="board-tabs" role="tablist" aria-label="排行榜模式"><button class="tab active" role="tab" aria-selected="true" data-tab="classic">经典模式</button><button class="tab" role="tab" aria-selected="false" data-tab="endless">无尽模式</button></div><div class="board-columns"><span>排名 / 玩家</span><span>分数</span></div><div class="board-list" id="board-list" role="tabpanel" aria-label="排行名单"><div class="board-empty">加载中…</div></div><p class="board-note" id="board-note" role="status"></p></div></section>
+
+      <div class="modal hidden" id="modal-nick" role="dialog" aria-modal="true" aria-labelledby="nick-title">
+        <div class="modal-card">
+          <div class="nick-heading"><h3 id="nick-title">登记昵称</h3><button class="icon-btn" id="btn-nick-close" type="button" aria-label="关闭昵称窗口"><svg class="icon"><use href="#i-close" /></svg></button></div>
+          <div id="nick-fields" class="nick-fields">
+            <p class="modal-sub" id="nick-rank-hint">你排在第 1 名</p><label class="input-label" for="nick-input">昵称</label>
+            <input id="nick-input" class="nick-input" type="text" placeholder="输入昵称" autocomplete="nickname" aria-required="true" aria-describedby="nick-hint" />
+            <div class="modal-hint" id="nick-hint" role="status" aria-live="polite">中文、字母、数字都可以，最多 12 个字</div>
+            <div class="modal-actions"><button class="btn btn-primary" id="btn-nick-ok" type="button">保存昵称</button></div>
+          </div>
+          <div id="nick-dismiss" class="nick-dismiss hidden" role="group" aria-labelledby="nick-dismiss-message">
+            <p id="nick-dismiss-message" role="alert"></p>
+            <div class="modal-actions"><button class="btn btn-primary" id="btn-nick-edit" type="button">继续填写</button><button class="text-btn" id="btn-nick-confirm-close" type="button">放弃填写并关闭</button></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal hidden" id="modal-pause" role="dialog" aria-modal="true" aria-labelledby="pause-title"><div class="modal-card"><h3 id="pause-title">已暂停</h3><p id="pause-sync" class="session-status" role="status"></p><div class="pause-settings"><button class="text-btn" data-sound aria-label="关闭声音"><svg class="icon"><use href="#i-sound" /></svg><span data-sound-label>声音开</span></button><button class="text-btn" data-guide>玩法与图鉴</button></div><div class="modal-actions"><button class="btn btn-primary" id="btn-resume">继续游戏<svg class="icon"><use href="#i-arrow" /></svg></button><div class="secondary-actions"><button class="text-btn" id="btn-restart">重新开始</button><button class="text-btn" id="btn-quit">回到首页</button></div></div></div></div>
+
+      <div class="modal hidden" id="modal-guide" role="dialog" aria-modal="true" aria-labelledby="guide-title"><div class="modal-card guide-card"><div class="page-heading"><h3 id="guide-title">玩法与图鉴</h3><button class="icon-btn" id="btn-guide-close" aria-label="关闭玩法与图鉴"><svg class="icon"><use href="#i-close" /></svg></button></div><div class="guide-scroll"><p class="guide-rules">按住鼠标或手指拖动瞄准，松开投放。相同等级相碰会合成下一级；持续越过警戒线 2 秒，本局结束。</p><p class="guide-keyboard">Esc 暂停。</p><div class="guide-tabs" role="tablist" aria-label="图鉴分类"><button class="guide-tab active" role="tab" aria-selected="true" data-guide-tab="classic">活动</button><button class="guide-tab" role="tab" aria-selected="false" data-guide-tab="endless">岗位</button></div><p class="guide-mode-rule" id="guide-mode-rule"></p><div class="collection" id="collection" role="tabpanel" aria-label="图鉴条目"></div><div class="guide-secret"><h4>隐藏道具</h4><div id="secret-collection"></div><p>获得后拖入场地，清除范围内的普通球。松手在场外或取消，不消耗道具。</p></div><div class="guide-secret hidden" id="guide-eggs"><h4>彩蛋</h4><div class="collection" id="egg-collection"></div></div></div></div></div>
+
+      <div class="modal hidden" id="modal-discovery" role="dialog" aria-modal="true" aria-labelledby="discovery-title" aria-describedby="discovery-description"><div class="modal-card discovery-card"><canvas id="discovery-preview" width="512" height="512" aria-hidden="true"></canvas><h3 id="discovery-title"></h3><p class="discovery-status hidden" id="discovery-status"></p><p class="discovery-description" id="discovery-description"></p><button class="btn btn-primary" id="btn-discovery-continue">继续</button></div></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

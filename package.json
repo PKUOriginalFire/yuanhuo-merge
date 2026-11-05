@@ -1,0 +1,22 @@
+{
+  "name": "yuanhuo-merge",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "web"
+  ],
+  "scripts": {
+    "assets:import": "node tools/import-art.mjs && node tools/build-sprites.mjs",
+    "assets:sprites": "node tools/build-sprites.mjs",
+    "dev": "npm run dev --workspace web -- --host 127.0.0.1",
+    "build": "npm run build:server-game && npm run build --workspace web",
+    "build:server-game": "tsc -p server/tsconfig.game.json",
+    "test": "npm run build:server-game && vitest run",
+    "test:anticheat": "node tools/verify-anticheat.js"
+  },
+  "devDependencies": {
+    "jsdom": "^27.0.0",
+    "sharp": "^0.35.5",
+    "vitest": "^4.0.0"
+  }
+}

@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>合成大元火 · 运营数据（10.17 – 10.29）</title>
+<style>
+  :root {
+    --ink: #1c1917; --ink2: #57534e; --ink3: #a8a29e;
+    --bg: #fbfaf9; --card: #ffffff; --line: #e7e5e4;
+    --red: #d1493b; --blue: #3b6fd8; --orange: #e08a1e; --purple: #6d4fd8; --green: #2f9e63;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 24px 72px; background: var(--bg); color: var(--ink);
+    font: 15px/1.6 -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; }
+  h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -.01em; }
+  .sub { color: var(--ink2); font-size: 14px; margin: 0 0 28px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 32px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .card .k { font-size: 12px; color: var(--ink3); letter-spacing: .02em; }
+  .card .v { font-size: 25px; font-weight: 650; letter-spacing: -.02em; margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .card .v small { font-size: 13px; font-weight: 400; color: var(--ink2); margin-left: 2px; }
+  .card .n { font-size: 12px; color: var(--ink3); margin-top: 2px; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px 16px; margin-bottom: 18px; }
+  h2 { font-size: 15px; margin: 0 0 3px; font-weight: 620; }
+  .hint { font-size: 12.5px; color: var(--ink3); margin: 0 0 14px; }
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .ax { font-size: 10.5px; fill: var(--ink3); font-variant-numeric: tabular-nums; }
+  .gl { stroke: var(--line); stroke-width: 1; }
+  .lbl { font-size: 11.5px; fill: var(--ink2); }
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink2); margin-top: 10px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  th:first-child, td:first-child { text-align: left; }
+  th { font-weight: 600; color: var(--ink2); font-size: 12px; }
+  td.dim { color: var(--ink3); }
+  .note { font-size: 12.5px; color: var(--ink2); line-height: 1.75; }
+  .note b { color: var(--ink); }
+  .note code { background: #f2f0ee; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+  .grid2 section { margin-bottom: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>合成大元火 · 运营数据</h1>
+  <p class="sub" id="sub"></p>
+
+  <div class="cards" id="cards"></div>
+
+  <section>
+    <h2>每天玩了多少局</h2>
+    <p class="hint">开局 = 真的点进去打了（含中途退出）；完赛 = 打完并成功提交。两者之间的差就是"没打完"。</p>
+    <div id="chart-daily"></div>
+    <div class="legend">
+      <span><i style="background:#d1493b"></i>每日开局数</span>
+      <span><i style="background:#3b6fd8"></i>每日完赛数</span>
+      <span><i style="background:#d1493b;opacity:.35"></i>开局 7 日均线</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>新增玩家 与 日活跃</h2>
+    <p class="hint">柱子 = 当天第一次开局的人，其中浅色部分是<b>幽灵账号</b>（提交的每一局都被判作弊，是刷分脚本的一次性 clientId）。折线 = 当天至少开了一局的人数，同一人一天只算一次。</p>
+    <div id="chart-users"></div>
+    <div class="legend">
+      <span><i style="background:#e08a1e"></i>真实新玩家</span>
+      <span><i style="background:#e08a1e;opacity:.22"></i>幽灵账号（作弊专用）</span>
+      <span><i style="background:#6d4fd8"></i>日活跃玩家</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>大家几点在玩</h2>
+    <p class="hint">按开始时间落在哪个小时统计，全部 947 局。晚上 21 点是绝对高峰。</p>
+    <div id="chart-hour"></div>
+    <div class="legend">
+      <span><i style="background:#d1493b"></i>经典模式</span>
+      <span><i style="background:#3b6fd8"></i>无尽模式</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>日期 × 小时 热力图</h2>
+    <p class="hint">每格 = 那一个小时里开了几局。颜色越深越热闹，能看出"哪天的哪个时段真的有人"。</p>
+    <div id="chart-heat"></div>
+  </section>
+
+  <section>
+    <h2>每个人玩了几局</h2>
+    <p class="hint" id="plays-hint"></p>
+    <div id="chart-plays"></div>
+  </section>
+
+  <div class="grid2">
+    <section>
+      <h2>单局得分分布</h2>
+      <p class="hint">剔除作弊局后 493 局。</p>
+      <div id="chart-score"></div>
+    </section>
+    <section>
+      <h2>单局时长分布</h2>
+      <p class="hint">游戏内实际计时，不含挂机。</p>
+      <div id="chart-duration"></div>
+    </section>
+  </div>
+
+  <section style="margin-top:18px">
+    <h2>单局落球数分布</h2>
+    <p class="hint">一局打了多少个球。落球数多但分数低，说明是"乱丢型"玩家。</p>
+    <div id="chart-drops"></div>
+  </section>
+
+  <section>
+    <h2>次日留存（按首次游玩日期分组）</h2>
+    <p class="hint">D1 = 第一次来玩之后，第二天还回来玩的比例。灰色「—」= 那天还没到。人数少于 8 人的队列用浅色标出——样本太小，百分比没有参考意义。</p>
+    <div id="table-retention"></div>
+  </section>
+
+  <section>
+    <h2>口径与坑</h2>
+    <div class="note">
+      <p><b>三个表分别是什么。</b>
+        <code>live_game</code> 每一步存档一行，代表"开过的局"，共 <span id="n-live"></span> 条；
+        <code>run</code> 是完赛提交后的成绩，<span id="n-run"></span> 条；
+        <code>player</code> 每个浏览器一个 clientId，<span id="n-player"></span> 条。
+        开局数和完赛数对不上是正常的——中途退出、换设备、存档失败都会只留下前者。</p>
+      <p><b>上线前有 26 个测试账号。</b>它们在 10.01–10.16 就建了 player 行但从没开过局，是开发期的调试 clientId。
+        所有图表已从 <b>10.17</b> 开始统计，这 26 个不计入新增。</p>
+      <p><b>均分和峰值分已剔除作弊局。</b>10.18 那天有一局伪造的 <code>999999</code> 分，
+        如果直接算平均会把当天均值拉到 14304。现在用的是 <code>suspicious=0</code> 的 493 局。</p>
+      <p><b>"完成率"按天算会超过 100%。</b>10.21 开局 18 局、完赛 21 局，因为有几局是 10.20 晚上 23 点开的、
+        跨到 21 号才打完。所以完成率看全局的 <span id="n-completion"></span> 就行，逐日那个数字只当趋势参考。</p>
+      <p><b>时长用 <code>run.duration_ms</code>，不是两个时间戳相减。</b>
+        后者会把挂机、断网、存档卡住的 24 小时长局全算进去，加起来 1576 小时；
+        用游戏内计时只有 317 小时，这个才是真的"有人握着鼠标在玩"。中位数 33 分钟，P90 62 分钟。</p>
+      <p><b>作弊率 15.4% 不代表 15% 的玩家在作弊。</b>90 个被判定的局里，很多是同一个人反复提交
+        （自动投放脚本、伪造 state）。按人去重后是 <span id="n-phantom"></span> 个"幽灵账号"——
+        它们提交的每一局都被判作弊，占总浏览器数的 <span id="n-phantom-rate"></span>。
+        这批账号会同时污染两个指标：<b>新增用户虚高</b>、<b>次日留存被拉到 0</b>。
+        10.20 那天 45 个新用户里有 13 个是幽灵，所以那天的 D1 留存正好是 0%。</p>
+      <p><b>多开是真实存在的。</b>按 <code>ip_hash</code> 聚合后发现，有一个 IP 下挂了 <b>12 个</b>不同的提交账号，
+        另有 10 个、7 个、7 个的各一个。也就是说"独立玩家数"应该按 IP 再打一次折扣，
+        真实的重度用户可能比 490 更少。</p>
+    </div>
+  </section>
+</div>
+
+<script>
+const D = __DATA__;
+
+// ── 小工具 ───────────────────────────────────────────────
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs = {}, parent) {
+  const n = document.createElementNS(NS, tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(n);
+  return n;
+}
+function mkSvg(host, w, h) {
+  const s = el('svg', { viewBox: '0 0 ' + w + ' ' + h, preserveAspectRatio: 'xMidYMid meet' });
+  document.getElementById(host).appendChild(s);
+  return s;
+}
+/** 把最大值归到一个"好看"的刻度步长，保证轴上全是整数 */
+function niceTicks(max, target = 4) {
+  if (!(max > 0)) return { top: 1, ticks: [0, 1] };
+  const raw = max / target;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw / mag;
+  const step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10) * mag;
+  const top = Math.ceil(max / step - 1e-9) * step;
+  const ticks = [];
+  for (let v = 0; v <= top + step * 1e-6; v += step) ticks.push(+v.toFixed(6));
+  return { top, ticks, step };
+}
+/** 刻度文字：整数就印整数，小步长才带一位小数 */
+const fmtTick = (v, step) => step >= 1 ? String(Math.round(v)) : String(+v.toFixed(1));
+function axisY(svg, x0, y0, w, h, max, target = 4) {
+  const { top, ticks, step } = niceTicks(max, target);
+  for (const v of ticks) {
+    const y = y0 + h - h * (v / top);
+    el('line', { x1: x0, y1: y, x2: x0 + w, y2: y, class: 'gl', 'stroke-dasharray': v === 0 ? '' : '3 4' }, svg);
+    el('text', { x: x0 - 9, y: y + 3.5, 'text-anchor': 'end', class: 'ax' }, svg).textContent = fmtTick(v, step);
+  }
+  return top;
+}
+function axisXLabels(svg, x0, y, w, labels, every) {
+  const step = w / labels.length;
+  labels.forEach((t, i) => {
+    if (i % every !== 0 && i !== labels.length - 1) return;
+    el('text', { x: x0 + step * (i + 0.5), y: y, 'text-anchor': 'middle', class: 'ax' }, svg).textContent = t;
+  });
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// ── 概览卡片 ─────────────────────────────────────────────
+const S = D.summary;
+document.getElementById('sub').textContent =
+  S.rangeStart + ' → ' + S.rangeEnd + '　共 ' + S.days + ' 天　·　生成于 ' +
+  new Date(D.generatedAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
+
+const cards = [
+  ['总开局数', S.started, '局', S.submitted + ' 局完赛'],
+  ['完赛率', S.completionRate, '%', '+' + (S.started - S.submitted) + ' 局中途退出'],
+  ['独立玩家', S.uniqueClients, '人', '其中 ' + S.namedPlayers + ' 人起了昵称'],
+  ['每人平均', (S.started / S.uniqueClients).toFixed(1), '局', '中位数只有 1 局'],
+  ['真实游戏时长', S.playHoursInGame, '小时', '单局中位 ' + S.durationMin.toFixed(0) + ' 分钟'],
+  ['只玩一次就走', S.onceOnlyRate, '%', S.onceOnly + ' / ' + S.uniqueClients + ' 人'],
+  ['作弊判定', S.suspRate, '%', S.suspicious + ' / ' + S.submitted + ' 局'],
+  ['最高分', S.bestScore.endless, '分', '经典 ' + S.bestScore.classic],
+];
+document.getElementById('cards').innerHTML = cards.map(([k, v, u, n]) =>
+  '<div class="card"><div class="k">' + k + '</div><div class="v">' + v + '<small>' + u + '</small></div><div class="n">' + n + '</div></div>'
+).join('');
+
+document.getElementById('n-live').textContent = '947';
+document.getElementById('n-run').textContent = S.submitted;
+document.getElementById('n-player').textContent = S.players;
+document.getElementById('n-completion').textContent = S.completionRate + '%';
+document.getElementById('n-phantom').textContent = S.phantomClients;
+document.getElementById('n-phantom-rate').textContent = S.phantomRate + '%';
+
+// ── 1. 每日开局 / 完赛 ────────────────────────────────────
+(function () {
+  const W = 960, H = 300, L = 54, R = 14, T = 14, B = 34;
+  const svg = mkSvg('chart-daily', W, H);
+  const dw = W - L - R, dh = H - T - B;
+  const rows = D.daily;
+  const max = axisY(svg, L, T, dw, dh, Math.max(...rows.map(r => Math.max(r.started, r.submitted))));
+
+  const step = dw / rows.length, bw = Math.min(26, step * 0.3);
+  rows.forEach((r, i) => {
+    const cx = L + step * (i + 0.5);
+    const h1 = dh * (r.started / max), h2 = dh * (r.submitted / max);
+    el('rect', { x: cx - bw - 1, y: T + dh - h1, width: bw, height: Math.max(h1, 0.5), fill: '#d1493b', rx: 2, opacity: .85 }, svg)
+      .appendChild(document.createElementNS(NS, 'title')).textContent = r.date + ' ' + r.weekday + '\n开局 ' + r.started + ' 局';
+    el('rect', { x: cx + 1, y: T + dh - h2, width: bw, height: Math.max(h2, 0.5), fill: '#3b6fd8', rx: 2, opacity: .85 }, svg)
+      .appendChild(document.createElementNS(NS, 'title')).textContent = r.date + ' ' + r.weekday + '\n完赛 ' + r.submitted + ' 局';
+  });
+
+  // 7 日移动平均
+  const ma = rows.map((_, i) => {
+    const win = rows.slice(Math.max(0, i - 6), i + 1);
+    return win.reduce((s, r) => s + r.started, 0) / win.length;
+  });
+  const pts = ma.map((v, i) => [L + step * (i + 0.5), T + dh - dh * (v / max)]);
+  el('polyline', { points: pts.map(p => p.join(',')).join(' '), fill: 'none', stroke: '#d1493b', 'stroke-width': 2, 'stroke-linecap': 'round', opacity: .45, 'stroke-dasharray': '5 4' }, svg);
+
+  axisXLabels(svg, L, H - 14, dw, rows.map(r => r.date.slice(5)), 1);
+})();
+
+// ── 2. 新增（真实/幽灵堆叠柱）+ 日活跃（折线）─────────────
+(function () {
+  const W = 960, H = 300, L = 54, R = 14, T = 14, B = 34;
+  const svg = mkSvg('chart-users', W, H);
+  const dw = W - L - R, dh = H - T - B;
+  const rows = D.daily;
+  const max = axisY(svg, L, T, dw, dh, Math.max(...rows.map(r => Math.max(r.newByFirstGame, r.activeClients))));
+  const step = dw / rows.length, bw = Math.min(30, step * 0.42);
+
+  rows.forEach((r, i) => {
+    const cx = L + step * (i + 0.5);
+    const real = Math.max(0, r.newByFirstGame - (r.newPhantom || 0));
+    const hp = dh * ((r.newPhantom || 0) / max);
+    const hr = dh * (real / max);
+    if (r.newPhantom) {
+      el('rect', { x: cx - bw / 2, y: T + dh - hp, width: bw, height: Math.max(hp, 0.5), fill: '#e08a1e', opacity: .22, rx: 2 }, svg)
+        .appendChild(document.createElementNS(NS, 'title')).textContent = r.date + ' ' + r.weekday + '\n幽灵账号 ' + r.newPhantom + ' 个（提交的每一局都被判作弊）';
+    }
+    el('rect', { x: cx - bw / 2, y: T + dh - hp - hr, width: bw, height: Math.max(hr, 0.5), fill: '#e08a1e', opacity: .85, rx: 2 }, svg)
+      .appendChild(document.createElementNS(NS, 'title')).textContent = r.date + ' ' + r.weekday + '\n真实新玩家 ' + real + ' 人';
+  });
+
+  // 日活折线
+  const pts = rows.map((r, i) => [L + step * (i + 0.5), T + dh - dh * (r.activeClients / max)]);
+  el('polygon', { points: [[L + step * 0.5, T + dh]].concat(pts).concat([[L + step * (rows.length - 0.5), T + dh]]).map(p => p.join(',')).join(' '), fill: '#6d4fd8', opacity: .07 }, svg);
+  el('polyline', { points: pts.map(p => p.join(',')).join(' '), fill: 'none', stroke: '#6d4fd8', 'stroke-width': 2.2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, svg);
+  rows.forEach((r, i) => {
+    el('circle', { cx: pts[i][0], cy: pts[i][1], r: 3.2, fill: '#fff', stroke: '#6d4fd8', 'stroke-width': 2 }, svg)
+      .appendChild(document.createElementNS(NS, 'title')).textContent = r.date + ' ' + r.weekday + '\n日活跃 ' + r.activeClients + ' 人';
+  });
+  axisXLabels(svg, L, H - 14, dw, rows.map(r => r.date.slice(5)), 1);
+})();
+
+// ── 3. 24 小时分布 ───────────────────────────────────────
+(function () {
+  const W = 960, H = 300, L = 54, R = 14, T = 14, B = 34;
+  const svg = mkSvg('chart-hour', W, H);
+  const dw = W - L - R, dh = H - T - B;
+  const rows = D.hourly;
+  const max = axisY(svg, L, T, dw, dh, Math.max(...rows.map(r => r.started)));
+  const step = dw / 24, bw = step * 0.62;
+  rows.forEach((r, i) => {
+    const cx = L + step * (i + 0.5);
+    const hc = dh * (r.classic / max), he = dh * (r.endless / max);
+    const t = el('g', {}, svg);
+    el('rect', { x: cx - bw / 2, y: T + dh - hc, width: bw, height: Math.max(hc, 0.5), fill: '#d1493b', opacity: .85, rx: 2 }, t)
+      .appendChild(document.createElementNS(NS, 'title')).textContent = r.hour + ':00\n经典 ' + r.classic + ' 局';
+    el('rect', { x: cx - bw / 2, y: T + dh - hc - he, width: bw, height: Math.max(he, 0.5), fill: '#3b6fd8', opacity: .85, rx: 2 }, t)
+      .appendChild(document.createElementNS(NS, 'title')).textContent = r.hour + ':00\n无尽 ' + r.endless + ' 局\n合计 ' + r.started + ' 局 / 独立玩家 ' + r.clients + ' 人';
+    if (r.started === Math.max(...rows.map(x => x.started)))
+      el('text', { x: cx, y: T + dh - hc - he - 6, 'text-anchor': 'middle', class: 'lbl', fill: '#d1493b' }, svg).textContent = r.started + ' 局';
+  });
+  rows.forEach((r, i) => {
+    el('text', { x: L + step * (i + 0.5), y: H - 14, 'text-anchor': 'middle', class: 'ax' }, svg).textContent = i % 2 === 0 ? r.hour : '';
+  });
+  el('text', { x: L, y: H - 1, class: 'ax' }, svg).textContent = '时（0–23，按开局时间）';
+})();
+
+// ── 4. 热力图 ────────────────────────────────────────────
+(function () {
+  const rows = D.daily, hours = 24;
+  const cw = 32, ch = 20, L = 74, T = 26;
+  const W = L + cw * hours + 16, H = T + ch * rows.length + 12;
+  const svg = mkSvg('chart-heat', W, H);
+  const max = Math.max(1, ...D.heatmap.map(x => x.n));
+  const idx = new Map(D.heatmap.map(x => [x.date + '|' + x.hour, x.n]));
+  for (let h = 0; h < hours; h++)
+    el('text', { x: L + cw * (h + 0.5), y: 17, 'text-anchor': 'middle', class: 'ax' }, svg).textContent = h % 2 === 0 ? h : '';
+  rows.forEach((r, ri) => {
+    el('text', { x: L - 8, y: T + ch * (ri + 0.72), 'text-anchor': 'end', class: 'ax' }, svg).textContent = r.date.slice(5) + ' ' + r.weekday;
+    for (let h = 0; h < hours; h++) {
+      const n = idx.get(r.date + '|' + h) || 0;
+      const a = n === 0 ? 0 : 0.12 + 0.88 * Math.pow(n / max, 0.65);
+      el('rect', { x: L + cw * h + 1, y: T + ch * ri + 1, width: cw - 2, height: ch - 2, rx: 3, fill: n === 0 ? '#f5f3f1' : '#d1493b', opacity: n === 0 ? 1 : a }, svg)
+        .appendChild(document.createElementNS(NS, 'title')).textContent = r.date + ' ' + r.weekday + ' ' + h + ':00 — ' + n + ' 局';
+    }
+  });
+})();
+
+// ── 5. 每用户局数 ────────────────────────────────────────
+(function () {
+  const rows = D.playsPerPlayer, W = 960, L = 150, R = 60, T = 10, B = 10, bh = 30;
+  const H = T + B + bh * rows.length;
+  const svg = mkSvg('chart-plays', W, H);
+  const max = Math.max(...rows.map(r => r.n));
+  let total = rows.reduce((s, r) => s + r.n, 0);
+  document.getElementById('plays-hint').textContent =
+    '共 ' + total + ' 个浏览器。' + rows[0].n + ' 个（' + (rows[0].n / total * 100).toFixed(0) + '%）只开过 1 局就再没回来。';
+  rows.forEach((r, i) => {
+    const y = T + bh * i + 4, w = (W - L - R) * (r.n / max);
+    el('text', { x: L - 10, y: y + 14, 'text-anchor': 'end', class: 'lbl' }, svg).textContent = r.label + ' 局';
+    el('rect', { x: L, y: y, width: Math.max(w, 1), height: bh - 10, rx: 3, fill: '#3b6fd8', opacity: .2 + 0.7 * (1 - i / rows.length) }, svg)
+      .appendChild(document.createElementNS(NS, 'title')).textContent = r.label + ' 局：' + r.n + ' 人（' + (r.n / total * 100).toFixed(1) + '%）';
+    el('text', { x: L + w + 8, y: y + 14, class: 'lbl' }, svg).textContent = r.n + ' 人 · ' + (r.n / total * 100).toFixed(0) + '%';
+  });
+})();
+
+// ── 6/7/8. 三个分布 ──────────────────────────────────────
+function distChart(host, rows, color) {
+  const W = 470, H = 260, L = 50, R = 14, T = 14, B = 52;
+  const svg = mkSvg(host, W, H);
+  const dw = W - L - R, dh = H - T - B;
+  const max = axisY(svg, L, T, dw, dh, Math.max(...rows.map(r => r.n)), 3);
+  const step = dw / rows.length, bw = step * 0.62;
+  const total = rows.reduce((s, r) => s + r.n, 0);
+  rows.forEach((r, i) => {
+    const cx = L + step * (i + 0.5), hh = dh * (r.n / max);
+    el('rect', { x: cx - bw / 2, y: T + dh - Math.max(hh, 0.5), width: bw, height: Math.max(hh, 0.5), fill: color, rx: 2, opacity: .82 }, svg)
+      .appendChild(document.createElementNS(NS, 'title')).textContent = r.label + '：' + r.n + ' 局（' + (r.n / total * 100).toFixed(1) + '%）';
+    el('text', { x: cx, y: H - 26, 'text-anchor': 'middle', class: 'ax', transform: 'rotate(-32 ' + cx + ' ' + (H - 26) + ')' }, svg).textContent = r.label;
+  });
+}
+distChart('chart-score', D.scoreBuckets, '#d1493b');
+distChart('chart-duration', D.durationBuckets, '#2f9e63');
+distChart('chart-drops', D.dropsBuckets, '#6d4fd8');
+
+// ── 9. 留存表 ────────────────────────────────────────────
+(function () {
+  const rows = D.retention;
+  const cell = v => v === null ? '<td class="dim">—</td>' : '<td>' + v + '%</td>';
+  document.getElementById('table-retention').innerHTML =
+    '<table><thead><tr><th>首次游玩日</th><th>当天新玩家</th><th>次日留存 D1</th><th>3 日留存 D3</th><th>7 日留存 D7</th></tr></thead><tbody>' +
+    rows.map(r => {
+      const weak = r.size < 8;                       // 样本太小，整行压暗
+      const s = weak ? ' style="opacity:.45"' : '';
+      return '<tr' + s + '><td>' + r.cohort + '　' + (D.daily.find(d => d.date === r.cohort)?.weekday || '') +
+        '</td><td>' + (r.size || '—') + '</td>' + cell(r.d1) + cell(r.d3) + cell(r.d7) + '</tr>';
+    }).join('') +
+    '</tbody></table>';
+})();
+</script>
+</body>
+</html>

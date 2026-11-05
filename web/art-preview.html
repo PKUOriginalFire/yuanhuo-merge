@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>圆形素材核对</title>
+<style>
+  *{box-sizing:border-box}body{margin:0;padding:24px;background:#f8f1e5;color:#513b2b;font-family:'Microsoft YaHei',sans-serif}h1{font-size:24px;margin:0 0 18px}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.tile{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px}canvas{width:100%;max-width:256px;height:auto}strong{font-size:16px}.status{font-size:12px;color:#80654b}@media(max-width:700px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+<h1>圆形素材核对</h1><div class="grid" id="grid"></div>
+<script type="module">
+import {loadAssets,drawSprite} from './src/assets.ts';
+import {CATALOG,SECRET_CATALOG} from './src/catalog.ts';
+const assets=await loadAssets();
+const entries=[...CATALOG.classic,SECRET_CATALOG.classic];
+const sprites=[...assets.themes.classic,assets.secrets.classic];
+entries.forEach((entry,i)=>{
+ const tile=document.createElement('div');tile.className='tile';
+ const canvas=document.createElement('canvas');canvas.width=canvas.height=512;
+ drawSprite(canvas.getContext('2d'),sprites[i],256,256,512);
+ const label=document.createElement('strong');label.textContent=entry.name;
+ const status=document.createElement('span');status.className='status';status.textContent=sprites[i].placeholder?'暂缺素材':'已接入原图';
+ tile.append(canvas,label,status);document.getElementById('grid').append(tile);
+});
+window.__artAssets=assets;
+</script>
+</html>

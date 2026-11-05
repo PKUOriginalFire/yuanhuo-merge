@@ -1,0 +1,85 @@
+# 合成大元火 —— 后端 systemd 服务
+#
+# 安装：
+#   sudo cp deploy/yuanhuo.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now yuanhuo-merge
+#
+# 看日志：
+#   journalctl -u yuanhuo-merge -f
+#
+# ⚠️ 密钥（ADMIN_TOKEN / IP_SALT）走 EnvironmentFile，**不要**写在 unit 里。
+#    unit 文件默认 0644（本机任何用户可读），而且 `systemctl show -p Environment`
+#    也能把 Environment= 的内容直接读出来。EnvironmentFile 可以设成 0600。
+
+[Unit]
+Description=合成大元火 排行榜后端
+After=network.target
+
+# ⚠️ 这两行属于 [Unit]，不是 [Service]。
+#    放错分区会被 systemd 静默忽略（只在日志里打一行 "Unknown key name ... ignoring"），
+#    结果是崩溃后无限重启。之前就放错了。
+StartLimitIntervalSec=120
+StartLimitBurst=10
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/opt/yuanhuo/server
+
+# 非敏感配置
+Environment=NODE_ENV=production
+Environment=PORT=8787
+Environment=HOST=127.0.0.1
+Environment=DB_PATH=/opt/yuanhuo/server/data/yuanhuo.db
+
+# ── 多进程（2026-10-19 加）
+# 后端是单线程的：实测一次最坏 checkpoint 要 ~20ms CPU，单进程每秒最多 ~32 次，
+# 被刷满时**全站卡死**（事件循环是共享的）。起 4 个 worker 之后一个被刷爆不连累其他。
+# 设成 1 就退回单进程行为（cluster.js 会直接 import index.js）。
+# ⚠️ 内存限流表是每个 worker 各一份，所以应用层限额的实际总量会 ×4 ——
+#    真正的第一道闸在 nginx（conf.d/yuanhuo-rate-limit.conf）。
+Environment=WEB_CONCURRENCY=4
+
+# 密钥从这里读，文件权限 0600。
+# 前面的 `-` 表示文件不存在也不报错（本地调试时可以不建）。
+EnvironmentFile=-/etc/yuanhuo/env
+
+ExecStart=/usr/bin/node --disable-warning=ExperimentalWarning cluster.js
+
+Restart=always
+RestartSec=3
+
+# ── 资源上限（2026-10-19 加）
+# 目的不是省资源，是**限住爆炸半径**：被刷或内存泄漏时别把整台机器拖死。
+# 实测单进程常驻 89MB，4 个 worker 也远低于下限。
+# CPUQuota 是全服务总配额：4 worker × ~87% ≈ 350%，给 nginx 和系统留一点。
+MemoryHigh=1000M
+MemoryMax=1200M
+CPUQuota=350%
+TasksMax=1024
+
+# ── 安全加固：这个进程只需要读写自己的数据目录
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/yuanhuo/server/data
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+LockPersonality=true
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+# 日志走 journald，不自己写文件
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=yuanhuo-merge
+
+[Install]
+WantedBy=multi-user.target

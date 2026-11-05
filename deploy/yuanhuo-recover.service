@@ -1,0 +1,57 @@
+# 合成大元火 · 兜底抢救"打完了但没提交成功"的成绩
+#
+# 安装：
+#   sudo cp deploy/yuanhuo-recover.service deploy/yuanhuo-recover.timer /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now yuanhuo-recover.timer
+#
+# 手动跑一次看效果：
+#   sudo systemctl start yuanhuo-recover.service
+#   journalctl -u yuanhuo-recover -n 30
+#
+# 为什么需要它：客户端提交成绩失败时只提示一句、不重试，完整对局只留在 live_game 里，
+# 被下一局顶成 abandoned 后一旦关掉页面就永久丢失。2026-10-19 就因为 nginx 的
+# client_max_body_size 64k 挡掉了 79KB 的提交包（413），丢掉一局无尽 13527 分。
+#
+# 只写"当前规则下完全干净"的成绩；任何一条规则有标记都只记日志、转人工。
+
+[Unit]
+Description=合成大元火 · 兜底抢救未提交的成绩
+Documentation=file:///opt/yuanhuo/docs/incident-submit-body-limit-20261019.md
+After=network.target yuanhuo.service
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/opt/yuanhuo/server
+
+Environment=NODE_ENV=production
+Environment=DB_PATH=/opt/yuanhuo/server/data/yuanhuo.db
+
+ExecStart=/usr/bin/node --disable-warning=ExperimentalWarning recover-cli.js
+
+# 正常情况下几十毫秒就结束；给足余量但别挂死
+TimeoutStartSec=90
+CPUQuota=50%
+MemoryMax=256M
+
+# 和主服务同级别的加固：这个进程只需要读写 data 目录
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/yuanhuo/server/data
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+LockPersonality=true
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=yuanhuo-recover
